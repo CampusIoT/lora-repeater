@@ -1,0 +1,850 @@
+[
+    {
+        "id": "f180ae37.a0e5e8",
+        "type": "tab",
+        "label": "Logger",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "8d5b1186.3d0678",
+        "type": "tab",
+        "label": "Repeater",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "77dc7ccf.c5e6ac",
+        "type": "tab",
+        "label": "LNS",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "3880a4d5.105944",
+        "type": "tab",
+        "label": "Parse lora_pkt_fwd log",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "2a042dee.905912",
+        "type": "udp in",
+        "z": "f180ae37.a0e5e8",
+        "name": "UDP 1780",
+        "iface": "",
+        "port": "1780",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "buffer",
+        "x": 160,
+        "y": 220,
+        "wires": [
+            [
+                "4d638c99.2000ec",
+                "1371746d.4b066c",
+                "a4cb3266.00eb68",
+                "2f06767a.019862",
+                "5260ddb6.f45b34"
+            ]
+        ]
+    },
+    {
+        "id": "52928cfe.850004",
+        "type": "function",
+        "z": "f180ae37.a0e5e8",
+        "name": "to base64",
+        "func": "\nvar now = Date.now();\nmsg.payload = now + \";\" + msg.payload.toString('base64');\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 1160,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "20666f92.e0c1a8",
+        "type": "file",
+        "z": "f180ae37.a0e5e8",
+        "name": "packet_forwarder.log",
+        "filename": "/home/pi/nodered/packet_forwarder.log",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 820,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4d638c99.2000ec",
+        "type": "function",
+        "z": "f180ae37.a0e5e8",
+        "name": "get PUSH_DATA json",
+        "func": "/*\n\n### 3.2. PUSH_DATA packet ###\n\nThat packet type is used by the gateway mainly to forward the RF packets \nreceived, and associated metadata, to the server.\n\n Bytes  | Function\n:------:|---------------------------------------------------------------------\n 0      | protocol version = 2\n 1-2    | random token\n 3      | PUSH_DATA identifier 0x00\n 4-11   | Gateway unique identifier (MAC address)\n 12-end | JSON object, starting with {, ending with }, see section 4\n\n*/\n\nvar buf = msg.payload;\n\nif(buf.length < 14) {\n    return undefined;\n}\n\nif(buf[3] !== 0x00) {\n    return undefined;\n}\n\nconst gatewayBuf = Buffer.alloc(buf.length - 8);\n\nbuf.copy(gatewayBuf, 0, 4, 8);\n\nconst jsonBuf = Buffer.alloc(buf.length - 12);\n\nbuf.copy(jsonBuf, 0, 12);\n\nmsg.payload = jsonBuf.toString();\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 300,
+        "y": 340,
+        "wires": [
+            [
+                "c2cfae8c.2fb268",
+                "7f30ff2a.1be858",
+                "f659e0fa.e33828"
+            ]
+        ]
+    },
+    {
+        "id": "c2cfae8c.2fb268",
+        "type": "function",
+        "z": "f180ae37.a0e5e8",
+        "name": "add epoch",
+        "func": "\nvar now = Date.now();\nmsg.payload = now + \";\" + msg.payload;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 590,
+        "y": 280,
+        "wires": [
+            [
+                "20666f92.e0c1a8"
+            ]
+        ]
+    },
+    {
+        "id": "a0d52338.34af98",
+        "type": "udp out",
+        "z": "f180ae37.a0e5e8",
+        "name": "to packet forwarder 1700",
+        "addr": "127.0.0.1",
+        "iface": "",
+        "port": "1700",
+        "ipv": "udp4",
+        "outport": "",
+        "base64": false,
+        "multicast": "false",
+        "x": 1150,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "1371746d.4b066c",
+        "type": "debug",
+        "z": "f180ae37.a0e5e8",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 290,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "efec9b8f.6f4e8",
+        "type": "debug",
+        "z": "8d5b1186.3d0678",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 630,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "ca059b3f.53e46",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "Filter TTN devaddr",
+        "func": "const TTN_NETID = 0x13;\nconst MType_Unconfirmed_Data_Up = 0x40;\nconst MType_Confirmed_Data_Up = 0x80;\n\nvar p = msg.payload;\n\nvar phyPayload = Buffer.from(p.data,'base64');\n\nif(phyPayload.length > 5) {\n    var hdr = phyPayload[0];\n    var netid = phyPayload[4] >>> 1;\n    if(((hdr === MType_Unconfirmed_Data_Up) || (hdr === MType_Confirmed_Data_Up)) && (netid === TTN_NETID)) {\n        msg.payload.devaddr = phyPayload.readInt32LE(1);\n        msg.payload.operator = \"UGA\";\n        return msg;\n    }\n}\nreturn null;\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 650,
+        "y": 260,
+        "wires": [
+            [
+                "b705b1de.bfea1"
+            ]
+        ]
+    },
+    {
+        "id": "9290695b.eefb4",
+        "type": "json",
+        "z": "8d5b1186.3d0678",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": true,
+        "x": 230,
+        "y": 240,
+        "wires": [
+            [
+                "2537fc65.0e40f4"
+            ]
+        ]
+    },
+    {
+        "id": "2537fc65.0e40f4",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "process  rxpk",
+        "func": "const json = msg.payload;\n\nconst rxpk = json.rxpk;\n\nif(!rxpk) {\n    return undefined;\n}\n\nconst msgs = [];\n\nrxpk.forEach(function(item){\n    // Check CRC status: 1 = OK, -1 = fail, 0 = no CRC\n    if(item.stat === 1) {\n        item.datahex = Buffer.from(item.data, 'base64').toString('hex');\n        msgs.push({ payload: item });\n    }\n});\n\nreturn [ msgs ];\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 410,
+        "y": 240,
+        "wires": [
+            [
+                "efec9b8f.6f4e8",
+                "ca059b3f.53e46",
+                "ff7399bb.3da918",
+                "8482b4b6.f0e288",
+                "2bc84924.b06a36"
+            ]
+        ]
+    },
+    {
+        "id": "b705b1de.bfea1",
+        "type": "debug",
+        "z": "8d5b1186.3d0678",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 910,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "ff7399bb.3da918",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "Filter UGA devaddr",
+        "func": "const UGA_NETID = 0x7e;\nconst MType_Unconfirmed_Data_Up = 0x40;\nconst MType_Confirmed_Data_Up = 0x80;\n\nvar p = msg.payload;\n\nvar phyPayload = Buffer.from(p.data,'base64');\n\nif(phyPayload.length > 5) {\n    var hdr = phyPayload[0];\n    var netid = phyPayload[4] >>> 1;\n    if(((hdr === MType_Unconfirmed_Data_Up) || (hdr === MType_Confirmed_Data_Up))\n        && (netid === UGA_NETID)) {\n        msg.payload.devaddr = phyPayload.readInt32LE(1);\n        msg.payload.operator = \"UGA\";\n        return msg;\n    }\n}\nreturn null;\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 650,
+        "y": 320,
+        "wires": [
+            [
+                "f4cf465f.52015"
+            ]
+        ]
+    },
+    {
+        "id": "5ad9c91d.2b73f8",
+        "type": "debug",
+        "z": "8d5b1186.3d0678",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 770,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "392f7d16.5fea2a",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "to txpk @ DR0",
+        "func": "// https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT\n\n/*\n6. Downstream JSON data structure\n----------------------------------\n\nThe root object of PULL_RESP packet must contain an object named \"txpk\":\n\n*/\n\nconst rxpk = msg.payload;\n\nconst json = {\"txpk\":{\n\t\"imme\":true,\n\t\"freq\":rxpk.freq,\n\t\"rfch\":0,\n\t\"powe\":14,\n\t\"modu\":\"LORA\",\n\t//\"datr\":rxpk.datr,\n\t\"datr\":\"SF12BW125\",\n\t\"codr\":rxpk.codr,\n\t\"ipol\":false,\n\t\"size\":rxpk.size,\n\t\"data\":rxpk.data\n}};\nmsg.payload = json;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 490,
+        "y": 480,
+        "wires": [
+            [
+                "5ad9c91d.2b73f8",
+                "cfc73b8d.b8861"
+            ]
+        ]
+    },
+    {
+        "id": "cfc73b8d.b8861",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "to PULL_RESP",
+        "func": "/*\n### 5.4. PULL_RESP packet ###\n\nThat packet type is used by the server to send RF packets and associated \nmetadata that will have to be emitted by the gateway.\n\n Bytes  | Function\n:------:|---------------------------------------------------------------------\n 0      | protocol version = 2\n 1-2    | random token\n 3      | PULL_RESP identifier 0x03\n 4-end  | JSON object, starting with {, ending with }, see section 6\n */\n \nconst PULL_RESP = 0x03;\n\nconst txpk = msg.payload;\n\nconst txpkStr = JSON.stringify(txpk,null,0);\n\nconst pullRespBuf = Buffer.alloc(txpkStr.length+4);\n\npullRespBuf[0] = 2;\npullRespBuf[1] = 0x12;\npullRespBuf[2] = 0x34;\npullRespBuf[3] = PULL_RESP;\n\nBuffer.from(txpkStr).copy(pullRespBuf,4);\n\nmsg.payload = pullRespBuf;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 750,
+        "y": 600,
+        "wires": [
+            [
+                "dc5afe9.d549c8",
+                "ddd821d8.022d",
+                "f71a9f6.77b0a6"
+            ]
+        ]
+    },
+    {
+        "id": "dc5afe9.d549c8",
+        "type": "debug",
+        "z": "8d5b1186.3d0678",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 1030,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "7b0133ed.5fa5e4",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "to txpk @ same DR",
+        "func": "// https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT\n\n/*\n6. Downstream JSON data structure\n----------------------------------\n\nThe root object of PULL_RESP packet must contain an object named \"txpk\":\n\n*/\n\nconst rxpk = msg.payload;\n\nconst json = {\"txpk\":{\n\t\"imme\":true,\n\t\"freq\":rxpk.freq,\n\t\"rfch\":0,\n\t\"powe\":14,\n\t\"modu\":\"LORA\",\n\t\"datr\":rxpk.datr,\n\t\"codr\":rxpk.codr,\n\t\"ipol\":false,\n\t\"size\":rxpk.size,\n\t\"data\":rxpk.data\n}};\nmsg.payload = json;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 510,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7f30ff2a.1be858",
+        "type": "link out",
+        "z": "f180ae37.a0e5e8",
+        "name": "PUSH_DATA from udp ",
+        "links": [
+            "dcf27d99.931248"
+        ],
+        "x": 545,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "a630fe9.a60c38",
+        "type": "link in",
+        "z": "f180ae37.a0e5e8",
+        "name": "To Local Forwarder",
+        "links": [
+            "ddd821d8.022d",
+            "f2df1955.760a7"
+        ],
+        "x": 655,
+        "y": 420,
+        "wires": [
+            [
+                "ed166279.04bae8"
+            ]
+        ]
+    },
+    {
+        "id": "dcf27d99.931248",
+        "type": "link in",
+        "z": "8d5b1186.3d0678",
+        "name": "To Repeater",
+        "links": [
+            "7f30ff2a.1be858"
+        ],
+        "x": 95,
+        "y": 240,
+        "wires": [
+            [
+                "9290695b.eefb4"
+            ]
+        ]
+    },
+    {
+        "id": "ddd821d8.022d",
+        "type": "link out",
+        "z": "8d5b1186.3d0678",
+        "name": "From Repeater",
+        "links": [
+            "a630fe9.a60c38"
+        ],
+        "x": 985,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "f4cf465f.52015",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "Filter neighbours endpoint ( LSNR>2 )",
+        "func": "var p = msg.payload;\n\nif(p.lsnr > 2) {\n    return undefined;\n} else {\n    return msg;    \n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 1010,
+        "y": 320,
+        "wires": [
+            [
+                "392f7d16.5fea2a"
+            ]
+        ]
+    },
+    {
+        "id": "19183cf.835bcc3",
+        "type": "udp out",
+        "z": "77dc7ccf.c5e6ac",
+        "name": "to lns.campusiot.imag.fr 1700",
+        "addr": "lns.campusiot.imag.fr",
+        "iface": "",
+        "port": "1700",
+        "ipv": "udp4",
+        "outport": "1781",
+        "base64": false,
+        "multicast": "false",
+        "x": 750,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "daa43e8b.f51",
+        "type": "udp in",
+        "z": "77dc7ccf.c5e6ac",
+        "name": "UDP 1781 from LNS",
+        "iface": "",
+        "port": "1781",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "buffer",
+        "x": 550,
+        "y": 220,
+        "wires": [
+            [
+                "f2df1955.760a7",
+                "bffc26d4.745928"
+            ]
+        ]
+    },
+    {
+        "id": "f2df1955.760a7",
+        "type": "link out",
+        "z": "77dc7ccf.c5e6ac",
+        "name": "",
+        "links": [
+            "a630fe9.a60c38"
+        ],
+        "x": 765,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "61ec9c71.7b138c",
+        "type": "link in",
+        "z": "77dc7ccf.c5e6ac",
+        "name": "To LNS",
+        "links": [
+            "a4cb3266.00eb68"
+        ],
+        "x": 475,
+        "y": 140,
+        "wires": [
+            [
+                "19183cf.835bcc3"
+            ]
+        ]
+    },
+    {
+        "id": "bffc26d4.745928",
+        "type": "debug",
+        "z": "77dc7ccf.c5e6ac",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 750,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "a4cb3266.00eb68",
+        "type": "link out",
+        "z": "f180ae37.a0e5e8",
+        "name": "From UDP",
+        "links": [
+            "61ec9c71.7b138c"
+        ],
+        "x": 735,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "2f06767a.019862",
+        "type": "function",
+        "z": "f180ae37.a0e5e8",
+        "name": "incr count_udp_datagram",
+        "func": "const COUNTER_NAME='count_udp_datagram';\n\n// initialise the counter to 0 if it doesn't exist already\nvar count = context.get(COUNTER_NAME)||0;\ncount += 1;\n// store the value back\ncontext.set(COUNTER_NAME,count);\n// make it part of the outgoing msg object\nmsg.count = count;\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 570,
+        "y": 700,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f659e0fa.e33828",
+        "type": "function",
+        "z": "f180ae37.a0e5e8",
+        "name": "incr count_PUSH_DATA",
+        "func": "const COUNTER_NAME='count_PUSH_DATA';\n\n// initialise the counter to 0 if it doesn't exist already\nvar count = context.get(COUNTER_NAME)||0;\ncount += 1;\n// store the value back\ncontext.set(COUNTER_NAME,count);\n// make it part of the outgoing msg object\nmsg.count = count;\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 570,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8482b4b6.f0e288",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "incr count_rxpk",
+        "func": "const COUNTER_NAME='count_rxpk';\n\n// initialise the counter to 0 if it doesn't exist already\nvar count = context.get(COUNTER_NAME)||0;\ncount += 1;\n// store the value back\ncontext.set(COUNTER_NAME,count);\n// make it part of the outgoing msg object\nmsg.count = count;\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 640,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f71a9f6.77b0a6",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "incr count_PULL_RESP",
+        "func": "const COUNTER_NAME='count_PULL_RESP';\n\n// initialise the counter to 0 if it doesn't exist already\nvar count = context.get(COUNTER_NAME)||0;\ncount += 1;\n// store the value back\ncontext.set(COUNTER_NAME,count);\n// make it part of the outgoing msg object\nmsg.count = count;\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 950,
+        "y": 680,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5260ddb6.f45b34",
+        "type": "function",
+        "z": "f180ae37.a0e5e8",
+        "name": "save fromip",
+        "func": "\nif(msg.fromip) {\n    // store the value back\n    context.set(\"udp_fromip\",msg.fromip);\n    context.set(\"udp_ip\",msg.ip);\n    context.set(\"udp_port\",msg.port);\n}\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 530,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e44ee31a.603d68",
+        "type": "udp out",
+        "z": "f180ae37.a0e5e8",
+        "name": "to packet forwarder",
+        "addr": "",
+        "iface": "",
+        "port": "",
+        "ipv": "udp4",
+        "outport": "",
+        "base64": false,
+        "multicast": "false",
+        "x": 1130,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "ed166279.04bae8",
+        "type": "function",
+        "z": "f180ae37.a0e5e8",
+        "name": "add saved ip and port",
+        "func": "\nvar ip = context.get(\"udp_ip\");\nvar port = context.get(\"udp_ip\");\nif(ip && port ) {\n    msg.ip = ip;\n    msg.port = port;\n}\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 860,
+        "y": 500,
+        "wires": [
+            [
+                "7dbd9ccc.8ea6cc",
+                "a0d52338.34af98"
+            ]
+        ]
+    },
+    {
+        "id": "7dbd9ccc.8ea6cc",
+        "type": "debug",
+        "z": "f180ae37.a0e5e8",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1070,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "54fd2125.a77548",
+        "type": "comment",
+        "z": "3880a4d5.105944",
+        "name": "### Concentrator temperature: 35 C ###",
+        "info": "",
+        "x": 250,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "3c89f4f3.2c0c3c",
+        "type": "tail",
+        "z": "3880a4d5.105944",
+        "name": "tail lora_pkt_fwd log",
+        "filetype": "text",
+        "split": "[\\r]{0,1}\\n",
+        "filename": "/tmp/lora_pkt_fwd.log",
+        "inputs": 0,
+        "x": 200,
+        "y": 240,
+        "wires": [
+            [
+                "f97e8800.5b03d",
+                "655a867a.7272",
+                "fe029ed6.c08218"
+            ]
+        ]
+    },
+    {
+        "id": "4b128977.679078",
+        "type": "debug",
+        "z": "3880a4d5.105944",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "f97e8800.5b03d",
+        "type": "function",
+        "z": "3880a4d5.105944",
+        "name": "grep \"Concentrator temperature\"",
+        "func": "const GREP_EXP='Concentrator temperature';\n\nconst line = msg.payload;\n\nif(line.indexOf(GREP_EXP)>0) {\n    return msg;    \n} else {\n    return undefined;\n}\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 500,
+        "y": 240,
+        "wires": [
+            [
+                "55298a.4c8a4678"
+            ]
+        ]
+    },
+    {
+        "id": "55298a.4c8a4678",
+        "type": "function",
+        "z": "3880a4d5.105944",
+        "name": "get temperature",
+        "func": "const GREP_EXP=/(\\d+) C/;\n\nvar re = new RegExp(GREP_EXP);\n\nconst line = msg.payload;\n\nlet match = re.exec(line);\n\nif(match) {\n    let temperature = parseInt(match[1], 10);\n    msg.payload = {\"temperature\":temperature};\n    return msg;    \n} else {\n    return undefined;\n}\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 660,
+        "y": 360,
+        "wires": [
+            [
+                "4b128977.679078",
+                "6e41e14.567b62"
+            ]
+        ]
+    },
+    {
+        "id": "6e41e14.567b62",
+        "type": "function",
+        "z": "3880a4d5.105944",
+        "name": "save temperature",
+        "func": "\nif(msg.payload.temperature) {\n    context.set(\"concentrator_temperature\",msg.payload.temperature);\n}\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 890,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "31a9eb34.e0c2c4",
+        "type": "comment",
+        "z": "3880a4d5.105944",
+        "name": "### GPS sync is disabled ###",
+        "info": "",
+        "x": 220,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "b48ea6e2.4d4408",
+        "type": "comment",
+        "z": "3880a4d5.105944",
+        "name": "Received pkt from mote: FC00ACA4 (fcnt=15468)",
+        "info": "",
+        "x": 280,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "655a867a.7272",
+        "type": "function",
+        "z": "3880a4d5.105944",
+        "name": "grep \"Received pkt from mote\"",
+        "func": "const GREP_EXP='Received pkt from mote';\n\nconst line = msg.payload;\n\nif(line.indexOf(GREP_EXP)>0) {\n    return msg;    \n} else {\n    return undefined;\n}\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 490,
+        "y": 560,
+        "wires": [
+            [
+                "60a715e6.700f84"
+            ]
+        ]
+    },
+    {
+        "id": "60a715e6.700f84",
+        "type": "debug",
+        "z": "3880a4d5.105944",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 730,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "fe029ed6.c08218",
+        "type": "function",
+        "z": "3880a4d5.105944",
+        "name": "grep \"GPS sync\"",
+        "func": "const GREP_EXP='GPS sync';\n\nconst line = msg.payload;\n\nif(line.indexOf(GREP_EXP)>0) {\n    return msg;    \n} else {\n    return undefined;\n}\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 450,
+        "y": 780,
+        "wires": [
+            [
+                "afa77bf4.02a828"
+            ]
+        ]
+    },
+    {
+        "id": "afa77bf4.02a828",
+        "type": "debug",
+        "z": "3880a4d5.105944",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 730,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "2bc84924.b06a36",
+        "type": "function",
+        "z": "8d5b1186.3d0678",
+        "name": "Filter devaddr list",
+        "func": "const MType_Unconfirmed_Data_Up = 0x40;\nconst MType_Confirmed_Data_Up = 0x80;\n// add the address of the Orange, Actility, Objenious and TTN objects\nconst devaddrs = [ 0x00000001 ];\n\nvar p = msg.payload;\n\nvar phyPayload = Buffer.from(p.data,'base64');\n\nif(phyPayload.length > 5) {\n    var hdr = phyPayload[0];\n    if((hdr === MType_Unconfirmed_Data_Up) || (hdr === MType_Confirmed_Data_Up)) {\n        var devaddr = phyPayload.readInt32LE(1);\n        if (devaddrs.includes(devaddr)) {\n            msg.payload.devaddr = devaddr;\n            return msg;\n        }\n    }\n}\nreturn null;\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 650,
+        "y": 380,
+        "wires": [
+            [
+                "f4cf465f.52015"
+            ]
+        ]
+    }
+]

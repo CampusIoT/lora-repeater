@@ -36,3 +36,8 @@ TODO
 
 ## Licence
 TODO
+
+
+## Media
+
+![Repeater into ballon case](https://gricad-gitlab.univ-grenoble-alpes.fr/thingsat/public/-/raw/master/balloons/2021-04-15/media/case3-internal-floor.jpg)

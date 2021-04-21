@@ -148,8 +148,8 @@
         "outport": "",
         "base64": false,
         "multicast": "false",
-        "x": 1070,
-        "y": 420,
+        "x": 1110,
+        "y": 760,
         "wires": []
     },
     {
@@ -236,7 +236,8 @@
                 "de6cb181.094df",
                 "94828403.a51c58",
                 "3ecf62bf.9c253e",
-                "acab314f.8e47"
+                "acab314f.8e47",
+                "19e3408.b9d874"
             ]
         ]
     },
@@ -957,5 +958,124 @@
         "x": 350,
         "y": 80,
         "wires": []
+    },
+    {
+        "id": "19e3408.b9d874",
+        "type": "function",
+        "z": "3bef1e6e.437bb2",
+        "name": "Decode packet",
+        "func": "var lora_packet = context.global.get('lora_packet');\n\nvar rx = msg.payload;\n\nconst packet = lora_packet.fromWire(Buffer.from(rx.datahex, \"hex\"));\n\nmsg.payload = packet;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 880,
+        "y": 240,
+        "wires": [
+            [
+                "c8ff2054.3a507",
+                "70e0e6b.a5f4398"
+            ]
+        ]
+    },
+    {
+        "id": "aee16906.978a08",
+        "type": "debug",
+        "z": "3bef1e6e.437bb2",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1290,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "5fdd94a9.528b6c",
+        "type": "function",
+        "z": "b472fd04.2a1b1",
+        "name": "packet decoding",
+        "func": "var lora_packet = context.global.get('lora_packet');\n\n\n//-----------------\n// packet decoding\n\n// decode a packet\nconst packet = lora_packet.fromWire(Buffer.from(\"40F17DBE4900020001954378762B11FF0D\", \"hex\"));\n\n// debug: prints out contents\n// - contents depend on packet type\n// - contents are named based on LoRa spec\nconsole.log(\"packet.toString()=\\n\" + packet);\n\n// e.g. retrieve payload elements\nconsole.log(\"packet MIC=\" + packet.MIC.toString(\"hex\"));\nconsole.log(\"FRMPayload=\" + packet.FRMPayload.toString(\"hex\"));\n\n// check MIC\nconst NwkSKey = Buffer.from(\"44024241ed4ce9a68c6a8bc055233fd3\", \"hex\");\nconsole.log(\"MIC check=\" + (lora_packet.verifyMIC(packet, NwkSKey) ? \"OK\" : \"fail\"));\n\n// calculate MIC based on contents\nconsole.log(\"calculated MIC=\" + lora_packet.calculateMIC(packet, NwkSKey).toString(\"hex\"));\n\n// decrypt payload\nconst AppSKey = Buffer.from(\"ec925802ae430ca77fd3dd73cb2cc588\", \"hex\");\nconsole.log(\"Decrypted (ASCII)='\" + lora_packet.decrypt(packet, AppSKey, NwkSKey).toString() + \"'\");\nconsole.log(\"Decrypted (hex)='0x\" + lora_packet.decrypt(packet, AppSKey, NwkSKey).toString(\"hex\") + \"'\");\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 350,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6b6308e5.9d7de8",
+        "type": "function",
+        "z": "b472fd04.2a1b1",
+        "name": "packet creation",
+        "func": "var lora_packet = context.global.get('lora_packet');\n\n\n//-----------------\n// packet creation\n\n// create a packet\nconst constructedPacket = lora_packet.fromFields(\n  {\n    MType: \"Unconfirmed Data Up\", // (default)\n    DevAddr: Buffer.from(\"01020304\", \"hex\"), // big-endian\n    FCtrl: {\n      ADR: false, // default = false\n      ACK: true, // default = false\n      ADRACKReq: false, // default = false\n      FPending: false, // default = false\n    },\n    FCnt: Buffer.from(\"0003\", \"hex\"), // can supply a buffer or a number\n    payload: \"test\",\n  },\n  Buffer.from(\"ec925802ae430ca77fd3dd73cb2cc588\", \"hex\"), // AppSKey\n  Buffer.from(\"44024241ed4ce9a68c6a8bc055233fd3\", \"hex\") // NwkSKey\n);\nconsole.log(\"constructedPacket.toString()=\\n\" + constructedPacket);\nconst wireFormatPacket = constructedPacket.getPHYPayload();\nconsole.log(\"wireFormatPacket.toString()=\\n\" + wireFormatPacket.toString(\"hex\"));\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 340,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c8ff2054.3a507",
+        "type": "function",
+        "z": "3bef1e6e.437bb2",
+        "name": "get DevAddr",
+        "func": "var packet = msg.payload;\nmsg.payload = packet.DevAddr\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 1110,
+        "y": 240,
+        "wires": [
+            [
+                "aee16906.978a08"
+            ]
+        ]
+    },
+    {
+        "id": "70e0e6b.a5f4398",
+        "type": "function",
+        "z": "3bef1e6e.437bb2",
+        "name": "get FCnt",
+        "func": "var packet = msg.payload;\nmsg.payload = packet.FCnt;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 1100,
+        "y": 180,
+        "wires": [
+            [
+                "aee16906.978a08"
+            ]
+        ]
+    },
+    {
+        "id": "46f9318b.9f1b48",
+        "type": "function",
+        "z": "aadd37.e202d2c8",
+        "name": "packet creation",
+        "func": "var lora_packet = context.global.get('lora_packet');\n\n// TODO should be global\nconst DevAddr = Buffer.from(\"01020304\", \"hex\"); // big-endian\nconst AppSKey = Buffer.from(\"ec925802ae430ca77fd3dd73cb2cc588\", \"hex\");\nconst NwkSKey = Buffer.from(\"44024241ed4ce9a68c6a8bc055233fd3\", \"hex\");\n\nconst constructedPacket = lora_packet.fromFields(\n  {\n    MType: \"Unconfirmed Data Up\", // (default)\n    DevAddr: DevAddr, \n    FCtrl: {\n      ADR: false, // default = false\n      ACK: false, // default = false\n      ADRACKReq: false, // default = false\n      FPending: false, // default = false\n    },\n    FPort: 100,\n    FCnt: FCnt++, // TODO should be global\n    payload: \"test\",\n  },\n  AppSKey,\n  NwkSKey\n);\nconst wireFormatPacket = constructedPacket.getPHYPayload();\nmsg.payload = wireFormatPacket;\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 300,
+        "y": 180,
+        "wires": [
+            []
+        ]
     }
 ]

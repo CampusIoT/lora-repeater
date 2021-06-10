@@ -45,6 +45,11 @@ cd ~/picoGW_packet_forwarder
 make
 ```
 
+#### Multitech Conduit MTCDT and MTCAP
+* Enables Semtech Packet Forwarder and NodeRED.
+* Configurer the packet forwarder with `localhost` as `server` and `1700` for `ports`
+* Open the NodeRED web UI and add the repeater flow `flows.js`
+
 ### Install Node-RED
 
 Install NodeJS and Node-RED

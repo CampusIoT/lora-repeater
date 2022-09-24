@@ -94,6 +94,7 @@ tail -f ~/nodered/packet_forwarder.log
 * [x] Semtech Corecell Eval Kit (SX1302)
 * [ ] Multitech MTCDT and MTCAP  (SX1301)
 * [ ] RPI + Picocell
+* [ ] [Wifx LoRix L1](https://github.com/Wifx/lorix-os) Yocto distribution
 
 ## Configure
 TODO

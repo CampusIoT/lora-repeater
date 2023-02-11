@@ -75,8 +75,8 @@
         "noerr": 0,
         "initialize": "",
         "finalize": "",
-        "x": 840,
-        "y": 120,
+        "x": 880,
+        "y": 240,
         "wires": [
             []
         ]
@@ -91,8 +91,8 @@
         "createDir": false,
         "overwriteFile": "false",
         "encoding": "none",
-        "x": 820,
-        "y": 280,
+        "x": 1060,
+        "y": 120,
         "wires": [
             []
         ]
@@ -102,18 +102,18 @@
         "type": "function",
         "z": "7b269d84.614dfc",
         "name": "get PUSH_DATA json",
-        "func": "/*\n\n### 3.2. PUSH_DATA packet ###\n\nThat packet type is used by the gateway mainly to forward the RF packets \nreceived, and associated metadata, to the server.\n\n Bytes  | Function\n:------:|---------------------------------------------------------------------\n 0      | protocol version = 2\n 1-2    | random token\n 3      | PUSH_DATA identifier 0x00\n 4-11   | Gateway unique identifier (MAC address)\n 12-end | JSON object, starting with {, ending with }, see section 4\n\n*/\n\nvar buf = msg.payload;\n\nif(buf.length < 14) {\n    return undefined;\n}\n\nif(buf[3] !== 0x00) {\n    return undefined;\n}\n\nconst gatewayBuf = Buffer.alloc(buf.length - 8);\n\nbuf.copy(gatewayBuf, 0, 4, 8);\n\nconst jsonBuf = Buffer.alloc(buf.length - 12);\n\nbuf.copy(jsonBuf, 0, 12);\n\nmsg.payload = jsonBuf.toString();\n\nreturn msg;",
+        "func": "/*\n\n### 3.2. PUSH_DATA packet ###\n\nThat packet type is used by the gateway mainly to forward the RF packets \nreceived, and associated metadata, to the server.\n\n Bytes  | Function\n:------:|---------------------------------------------------------------------\n 0      | protocol version = 2\n 1-2    | random token\n 3      | PUSH_DATA identifier 0x00\n 4-11   | Gateway unique identifier (MAC address)\n 12-end | JSON object, starting with {, ending with }, see section 4\n\n*/\n\nvar buf = msg.payload;\n\nif(buf.length < 14) {\n    return undefined;\n}\n\nif(buf[3] !== 0x00) {\n    return undefined;\n}\n\nconst gatewayBuf = Buffer.alloc(8);\n\nbuf.copy(gatewayBuf, 0, 4, 12);\n\nvar gateway = gatewayBuf.toString(\"hex\");\nmsg.gatewayEUI = gateway;\n\nconst jsonBuf = Buffer.alloc(buf.length - 12);\n\nbuf.copy(jsonBuf, 0, 12);\n\nmsg.payload = jsonBuf.toString();\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
-        "x": 300,
-        "y": 340,
+        "x": 280,
+        "y": 80,
         "wires": [
             [
-                "fb7fd931.828f2",
                 "e6bed7d6.66ce78",
-                "3f0f98c.77a92e8"
+                "3f0f98c.77a92e8",
+                "59dcbb03.4658b4"
             ]
         ]
     },
@@ -122,35 +122,19 @@
         "type": "function",
         "z": "7b269d84.614dfc",
         "name": "add epoch",
-        "func": "\nvar now = Date.now();\nmsg.payload = now + \";\" + msg.payload;\nreturn msg;",
+        "func": "var ts = msg.payload.timestamp;\nif(ts===undefined) {\n    ts = Date.now();\n}\nmsg.payload = ts + \";\" + msg.payload;\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
-        "x": 590,
-        "y": 280,
+        "x": 750,
+        "y": 140,
         "wires": [
             [
                 "2cfcb398.f1f9c4",
                 "ec4f74a4.8b57b8"
             ]
         ]
-    },
-    {
-        "id": "ec7a25ba.8e0d98",
-        "type": "udp out",
-        "z": "7b269d84.614dfc",
-        "name": "to packet forwarder 1700",
-        "addr": "127.0.0.1",
-        "iface": "",
-        "port": "1700",
-        "ipv": "udp4",
-        "outport": "",
-        "base64": false,
-        "multicast": "false",
-        "x": 1110,
-        "y": 760,
-        "wires": []
     },
     {
         "id": "caa1d2d6.020978",
@@ -422,7 +406,7 @@
         "type": "function",
         "z": "3bef1e6e.437bb2",
         "name": "Filter neighbours endpoint",
-        "func": "var p = msg.payload;\n\nif(p.lsnr > 2) {\n    return undefined;\n} else {\n    return msg;    \n}",
+        "func": "var p = msg.payload;\n\nif(p.lsnr > 20) {\n    return undefined;\n} else {\n    return msg;    \n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -616,7 +600,7 @@
         "iface": "",
         "port": "",
         "ipv": "udp4",
-        "outport": "",
+        "outport": "1780",
         "base64": false,
         "multicast": "false",
         "x": 1090,
@@ -628,7 +612,7 @@
         "type": "function",
         "z": "7b269d84.614dfc",
         "name": "add saved ip and port",
-        "func": "\nvar ip = context.get(\"udp_ip\");\nvar port = context.get(\"udp_ip\");\nif(ip && port ) {\n    msg.ip = ip;\n    msg.port = port;\n}\n\nreturn msg;\n",
+        "func": "\nvar ip = context.get(\"udp_ip\");\nvar port = context.get(\"udp_port\");\nif(ip && port ) {\n    msg.ip = ip;\n    msg.port = port;\n}\n\nreturn msg;\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -850,16 +834,17 @@
         "type": "function",
         "z": "7b269d84.614dfc",
         "name": "build PUSH_ACK packet",
-        "func": "/*\n\n### 3.3. PUSH_ACK packet ###\n\nThat packet type is used by the server to acknowledge immediately all the \nPUSH_DATA packets received.\n\n Bytes  | Function\n:------:|---------------------------------------------------------------------\n 0      | protocol version = 2\n 1-2    | same token as the PUSH_DATA packet to acknowledge\n 3      | PUSH_ACK identifier 0x01\n*/\n\nvar buf = msg.payload;\n\nif(buf.length < 14) {\n    return undefined;\n}\n\nif(buf[3] !== 0x00) {\n    return undefined;\n}\n\nconst PUSH_ACK = 0x01;\n\nconst packet = Buffer.alloc(4);\n\npacket[0] = 2;\nbuf.copy(packet, 1, 2);\npacket[0] = PUSH_ACK;\n\nmsg.payload = packet;\n\nreturn msg;\n",
+        "func": "/*\n\n### 3.3. PUSH_ACK packet ###\n\nThat packet type is used by the server to acknowledge immediately all the \nPUSH_DATA packets received.\n\n Bytes  | Function\n:------:|---------------------------------------------------------------------\n 0      | protocol version = 2\n 1-2    | same token as the PUSH_DATA packet to acknowledge\n 3      | PUSH_ACK identifier 0x01\n*/\n\nvar buf = msg.payload;\n\nif(buf.length < 14) {\n    return undefined;\n}\n\nif(buf[3] !== 0x00) {\n    return undefined;\n}\n\nconst PUSH_ACK = 0x01;\n\nconst packet = Buffer.alloc(4);\n\npacket[0] = 2;\npacket[1] = buf[1];\npacket[2] = buf[2];\npacket[3] = PUSH_ACK;\n\nmsg.payload = packet;\n\nreturn msg;\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
-        "x": 630,
+        "x": 670,
         "y": 340,
         "wires": [
             [
-                "4e73c665.1bf908"
+                "4e73c665.1bf908",
+                "f2a33ac9.893d08"
             ]
         ]
     },
@@ -909,8 +894,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 850,
-        "y": 320,
+        "x": 1030,
+        "y": 160,
         "wires": []
     },
     {
@@ -969,7 +954,7 @@
         "noerr": 0,
         "initialize": "",
         "finalize": "",
-        "x": 880,
+        "x": 740,
         "y": 240,
         "wires": [
             [
@@ -1031,7 +1016,7 @@
         "type": "function",
         "z": "3bef1e6e.437bb2",
         "name": "get DevAddr",
-        "func": "var packet = msg.payload;\nmsg.payload = packet.DevAddr\nreturn msg;",
+        "func": "var packet = msg.payload;\n\nif(packet.DevAddr) {\n    msg.payload = packet.DevAddr;\n    return msg;    \n} else {\n    return undefined;\n}\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -1049,7 +1034,7 @@
         "type": "function",
         "z": "3bef1e6e.437bb2",
         "name": "get FCnt",
-        "func": "var packet = msg.payload;\nmsg.payload = packet.FCnt;\nreturn msg;",
+        "func": "var packet = msg.payload;\n\nif(packet.FCnt) {\n    msg.payload = packet.FCnt;\n    return msg;    \n} else {\n    return undefined;\n}\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -1076,6 +1061,125 @@
         "y": 180,
         "wires": [
             []
+        ]
+    },
+    {
+        "id": "2d572525.14d43a",
+        "type": "debug",
+        "z": "7b269d84.614dfc",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "9d5db394.65b78",
+        "type": "json",
+        "z": "7b269d84.614dfc",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 540,
+        "y": 580,
+        "wires": [
+            [
+                "2d572525.14d43a"
+            ]
+        ]
+    },
+    {
+        "id": "f2a33ac9.893d08",
+        "type": "debug",
+        "z": "7b269d84.614dfc",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1030,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "59dcbb03.4658b4",
+        "type": "json",
+        "z": "7b269d84.614dfc",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 520,
+        "y": 40,
+        "wires": [
+            [
+                "1749de26.b99afa"
+            ]
+        ]
+    },
+    {
+        "id": "ef03d0ef.afd8b8",
+        "type": "debug",
+        "z": "7b269d84.614dfc",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1030,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "1749de26.b99afa",
+        "type": "function",
+        "z": "7b269d84.614dfc",
+        "name": "decode data",
+        "func": "var lora_packet = context.global.get('lora_packet');\n\nvar ts = msg.payload.timestamp;\nif(ts===undefined) {\n    msg.payload.timestamp = Date.now();\n}\n\nmsg.payload.date = (new Date(msg.payload.timestamp)).toISOString();\n\nvar rxpk = msg.payload.rxpk\nif(rxpk) {\n    for(var i=0; i<rxpk.length; i++ ){\n        var pk = rxpk[i];\n        var data = pk.data;\n        var _data = Buffer.from(data,'base64');\n        pk._data = _data.toString('hex');\n        var _packet = lora_packet.fromWire(_data);\n        // pk._packet = _packet;\n        \n        pk._MType = _packet.getMType();\n        if(_packet.getFCnt()) {\n            pk._FCnt = _packet.getFCnt();\n        }\n        if(_packet.getFPort()) {\n            pk._FPort = _packet.getFPort();\n        }\n        if(_packet.DevAddr) {\n            pk._DevAddr = _packet.DevAddr.toString('hex');\n        }\n        if(_packet.DevEUI) {\n            pk._DevEUI = _packet.DevEUI.toString('hex');\n        }\n        if(_packet.AppEUI) {\n            pk._AppEUI = _packet.AppEUI.toString('hex');\n        }\n        if(_packet.MIC) {\n            pk._MIC = _packet.MIC.toString('hex');\n        }\n    }\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 710,
+        "y": 40,
+        "wires": [
+            [
+                "ef03d0ef.afd8b8",
+                "b4e641e3.1a8eb"
+            ]
+        ]
+    },
+    {
+        "id": "b4e641e3.1a8eb",
+        "type": "function",
+        "z": "7b269d84.614dfc",
+        "name": "json to string",
+        "func": "msg.payload = JSON.stringify(msg.payload,null,0);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 750,
+        "y": 100,
+        "wires": [
+            [
+                "fb7fd931.828f2"
+            ]
         ]
     }
 ]

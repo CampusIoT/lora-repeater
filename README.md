@@ -92,6 +92,7 @@ tail -f ~/nodered/packet_forwarder.log
 
 ## Tested hardware
 * [x] Semtech Corecell Eval Kit (SX1302)
+* [ ] [RAK Wireless RAK5146](https://store.rakwireless.com/products/wislink-concentrator-module-sx1303-rak5146-lorawan?variant=39667784908998) (SX1303 + ZOE-M8Q GNSS chip)
 * [ ] Multitech MTCDT and MTCAP  (SX1301)
 * [ ] RPI + Picocell
 * [ ] [Wifx LoRix L1](https://github.com/Wifx/lorix-os) Yocto distribution
